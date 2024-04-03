@@ -1,0 +1,12 @@
+E:\Desktop\C# Projects\XFBIN_LIB\bin\Debug\net7.0\XFBIN_LIB.deps.json
+E:\Desktop\C# Projects\XFBIN_LIB\bin\Debug\net7.0\XFBIN_LIB.dll
+E:\Desktop\C# Projects\XFBIN_LIB\bin\Debug\net7.0\XFBIN_LIB.pdb
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.csproj.AssemblyReference.cache
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.GeneratedMSBuildEditorConfig.editorconfig
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.AssemblyInfoInputs.cache
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.AssemblyInfo.cs
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.csproj.CoreCompileInputs.cache
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.dll
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\refint\XFBIN_LIB.dll
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.pdb
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\ref\XFBIN_LIB.dll

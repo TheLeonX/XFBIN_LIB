@@ -1,0 +1,5 @@
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net5.0\XFBIN_LIB.csproj.AssemblyReference.cache
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net5.0\XFBIN_LIB.GeneratedMSBuildEditorConfig.editorconfig
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net5.0\XFBIN_LIB.AssemblyInfoInputs.cache
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net5.0\XFBIN_LIB.AssemblyInfo.cs
+E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net5.0\XFBIN_LIB.csproj.CoreCompileInputs.cache
