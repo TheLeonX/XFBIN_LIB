@@ -1,11 +1,14 @@
 {
   "version": 2,
-  "dgSpecHash": "ZnhcN7BJBmtUgyOg5JBq9WH7JgRAjBu1k76B1cAzkhFEY9GZ6e/vFhaj0BC3xm1+WZXO8zx3KYxTbuj/b96eBQ==",
+  "dgSpecHash": "7vfs54Gz2pQ=",
   "success": true,
-  "projectFilePath": "E:\\Desktop\\C# Projects\\XFBIN_LIB\\XFBIN_LIB.csproj",
+  "projectFilePath": "C:\\Users\\ARDOR\\Desktop\\C# Projects\\XFBIN_LIB\\XFBIN_LIB.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\user\\.nuget\\packages\\jonskeet.miscutil\\0.2.0\\jonskeet.miscutil.0.2.0.nupkg.sha512",
-    "C:\\Users\\user\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512"
+    "C:\\Users\\ARDOR\\.nuget\\packages\\jonskeet.miscutil\\0.2.0\\jonskeet.miscutil.0.2.0.nupkg.sha512",
+    "C:\\Users\\ARDOR\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\ARDOR\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\7.0.20\\microsoft.windowsdesktop.app.ref.7.0.20.nupkg.sha512",
+    "C:\\Users\\ARDOR\\.nuget\\packages\\microsoft.netcore.app.ref\\7.0.20\\microsoft.netcore.app.ref.7.0.20.nupkg.sha512",
+    "C:\\Users\\ARDOR\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\7.0.20\\microsoft.aspnetcore.app.ref.7.0.20.nupkg.sha512"
   ],
   "logs": [
     {

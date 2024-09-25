@@ -10,3 +10,16 @@ E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.dll
 E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\refint\XFBIN_LIB.dll
 E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.pdb
 E:\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\ref\XFBIN_LIB.dll
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\bin\Debug\net7.0\XFBIN_LIB.deps.json
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\bin\Debug\net7.0\XFBIN_LIB.dll
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\bin\Debug\net7.0\XFBIN_LIB.pdb
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.csproj.AssemblyReference.cache
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.AssemblyInfoInputs.cache
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.AssemblyInfo.cs
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.csproj.CoreCompileInputs.cache
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.sourcelink.json
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.dll
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\refint\XFBIN_LIB.dll
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\XFBIN_LIB.pdb
+C:\Users\ARDOR\Desktop\C# Projects\XFBIN_LIB\obj\Debug\net7.0\ref\XFBIN_LIB.dll

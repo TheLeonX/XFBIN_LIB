@@ -12,6 +12,7 @@ namespace XFBIN_LIB {
     public class XFBIN_READER {
         public XFBIN.XFBIN XfbinFile = new XFBIN.XFBIN();
         public void ReadXFBIN(string path = "") {
+            XfbinFile = new XFBIN.XFBIN();
             using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open))) {
                 XfbinFile.MAGIC = reader.ReadChars(4);
                 XfbinFile.FileID = reader.ReadUInt32BE();
@@ -145,6 +146,14 @@ namespace XFBIN_LIB {
                 //}
             }
         }
+
+        public string GetXfbinChunkType(int ChunkMapIndex)
+        {
+            int index = (int)XfbinFile.ChunkTable.ChunkMapIndices[ChunkMapIndex].ChunkMapIndex;
+
+
+            return XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[index].ChunkTypeIndex].ChunkTypeName;
+        }
     }
     public static class Helpers {
         // Note this MODIFIES THE GIVEN ARRAY then returns a reference to the modified array.
@@ -276,6 +285,9 @@ namespace XFBIN_LIB {
         public static Int32 ReadInt32BE(this BinaryReader binRdr) {
             return BitConverter.ToInt32(binRdr.ReadBytesRequired(sizeof(Int32)).Reverse(), 0);
         }
+
+
+
 
         public static byte[] ReadBytesRequired(this BinaryReader binRdr, int byteCount) {
             var result = binRdr.ReadBytes(byteCount);
