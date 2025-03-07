@@ -165,7 +165,7 @@ namespace XFBIN_LIB {
         public static ObservableCollection<CHUNK_TYPE> ReadChunkTypeList(this BinaryReader binRdr, int size) {
             ObservableCollection<CHUNK_TYPE> return_list = new ObservableCollection<CHUNK_TYPE>();
             byte[] byteTypes = binRdr.ReadBytes(size-1);
-            string[] readChunkTypesString = Encoding.ASCII.GetString(byteTypes).Split(new char[] { '\0' });
+            string[] readChunkTypesString = Encoding.UTF8.GetString(byteTypes).Split(new char[] { '\0' });
             for (int i = 0; i < readChunkTypesString.Length; i++) {
                 return_list.Add(new CHUNK_TYPE { ChunkTypeName = readChunkTypesString[i] });
             }
@@ -175,7 +175,7 @@ namespace XFBIN_LIB {
         public static ObservableCollection<FILE_PATH> ReadFilePathList(this BinaryReader binRdr, int size) {
             ObservableCollection<FILE_PATH> return_list = new ObservableCollection<FILE_PATH>();
             byte[] byteTypes = binRdr.ReadBytes(size -1);
-            string[] readChunkTypesString = Encoding.ASCII.GetString(byteTypes).Split(new char[] { '\0' });
+            string[] readChunkTypesString = Encoding.UTF8.GetString(byteTypes).Split(new char[] { '\0' });
             for (int i = 0; i < readChunkTypesString.Length; i++) {
                 return_list.Add(new FILE_PATH { FilePathName = readChunkTypesString[i] });
             }
@@ -185,7 +185,7 @@ namespace XFBIN_LIB {
         public static ObservableCollection<CHUNK_NAME> ReadChunkNameList(this BinaryReader binRdr, int size) {
             ObservableCollection<CHUNK_NAME> return_list = new ObservableCollection<CHUNK_NAME>();
             byte[] byteTypes = binRdr.ReadBytes(size - 1);
-            string[] readChunkTypesString = Encoding.ASCII.GetString(byteTypes).Split(new char[] { '\0' });
+            string[] readChunkTypesString = Encoding.UTF8.GetString(byteTypes).Split(new char[] { '\0' });
             for (int i = 0; i < readChunkTypesString.Length; i++) {
                 return_list.Add(new CHUNK_NAME { ChunkName = readChunkTypesString[i] });
             }
