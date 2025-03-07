@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("XFBIN_LIB")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9109a01e031001773180f12853ee1ade55a5f437")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3ed623fede9e2f1016271a6f7f214a03fd17ca17")]
 [assembly: System.Reflection.AssemblyProductAttribute("XFBIN_LIB")]
 [assembly: System.Reflection.AssemblyTitleAttribute("XFBIN_LIB")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

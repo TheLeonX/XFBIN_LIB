@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.PortableExecutable;
 using System.Text;
+using System.Threading.Tasks;
 using XFBIN_LIB.XFBIN;
 
 namespace XFBIN_LIB
 {
-
     public class XFBIN_READER
     {
         public XFBIN.XFBIN XfbinFile = new XFBIN.XFBIN();
@@ -27,6 +27,7 @@ namespace XFBIN_LIB
                 XfbinFile.FileVersionAttribute = reader.ReadUInt16BE();
                 Console.WriteLine($"Version: {XfbinFile.FileVersion}  Attribute: {XfbinFile.FileVersionAttribute}");
 
+
                 XfbinFile.ChunkTable.ChunkTypeCount = reader.ReadUInt32BE();
                 XfbinFile.ChunkTable.ChunkTypeSize = reader.ReadUInt32BE();
                 XfbinFile.ChunkTable.FilePathCount = reader.ReadUInt32BE();
@@ -41,70 +42,52 @@ namespace XFBIN_LIB
                 XfbinFile.ChunkTable.FilePaths = reader.ReadFilePathList((int)XfbinFile.ChunkTable.FilePathSize);
                 XfbinFile.ChunkTable.ChunkNames = reader.ReadChunkNameList((int)XfbinFile.ChunkTable.ChunkNameSize);
 
-                // Skip padding bytes to align to 4-byte boundary.
+                //skip 00s
                 int offset = (int)reader.BaseStream.Position;
                 int add_null = 4 - (offset % 4);
-                if (add_null != 4)
-                    reader.BaseStream.Seek(add_null, SeekOrigin.Current);
+                reader.BaseStream.Seek(add_null, SeekOrigin.Current);
 
                 XfbinFile.ChunkTable.ChunkMaps = reader.ReadChunkMapList((int)XfbinFile.ChunkTable.ChunkMapSize, (int)XfbinFile.ChunkTable.ChunkMapCount);
                 XfbinFile.ChunkTable.ExtraMappings = reader.ReadExtraChunkMapList((int)XfbinFile.ChunkTable.ExtraIndicesCount * 8, (int)XfbinFile.ChunkTable.ExtraIndicesCount);
                 XfbinFile.ChunkTable.ChunkMapIndices = reader.ReadChunkMapIndicesList((int)XfbinFile.ChunkTable.ChunkMapIndicesCount * 4, (int)XfbinFile.ChunkTable.ChunkMapIndicesCount);
 
-                // Read pages and chunks
+                //read pages and chunks
                 int extraMappingOffset = 0;
                 int chunkIndicesOffset = 0;
-                int page_id = 0;
-                Console.WriteLine(reader.BaseStream.Position);
 
+                int page_id = 0;
                 while (reader.BaseStream.Position != reader.BaseStream.Length)
                 {
                     PAGE new_page = new PAGE();
                     while (reader.BaseStream.Position != reader.BaseStream.Length)
                     {
                         CHUNK read_chunk = reader.ReadChunk();
-                        // Adjust the chunk's mapping index to account for the global mapping list offset.
                         read_chunk.ChunkMapIndex += (UInt32)chunkIndicesOffset;
+                        //Console.WriteLine($"Page: {XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ChunkMapIndices[(int)read_chunk.ChunkMapIndex + chunkIndicesOffset].ChunkMapIndex].ChunkTypeIndex].ChunkTypeName}");
                         new_page.Chunks.Add(read_chunk);
-                        Console.WriteLine(read_chunk.ChunkMapIndex);
-                        Console.WriteLine(reader.BaseStream.Position);
-                        // Safely follow the index chain:
-                        int idx1 = (int)read_chunk.ChunkMapIndex;
-                        if (idx1 < 0 || idx1 >= XfbinFile.ChunkTable.ChunkMapIndices.Count)
-                            throw new IndexOutOfRangeException($"ChunkMapIndices index {idx1} out of range (Count: {XfbinFile.ChunkTable.ChunkMapIndices.Count}).");
-                        int idx2 = (int)XfbinFile.ChunkTable.ChunkMapIndices[idx1].ChunkMapIndex;
-                        if (idx2 < 0 || idx2 >= XfbinFile.ChunkTable.ChunkMaps.Count)
-                            throw new IndexOutOfRangeException($"ChunkMaps index {idx2} out of range (Count: {XfbinFile.ChunkTable.ChunkMaps.Count}).");
-                        int idx3 = (int)XfbinFile.ChunkTable.ChunkMaps[idx2].ChunkTypeIndex;
-                        if (idx3 < 0 || idx3 >= XfbinFile.ChunkTable.ChunkTypes.Count)
-                            throw new IndexOutOfRangeException($"ChunkTypes index {idx3} out of range (Count: {XfbinFile.ChunkTable.ChunkTypes.Count}).");
-
-                        if (XfbinFile.ChunkTable.ChunkTypes[idx3].ChunkTypeName == "nuccChunkPage")
+                        if (XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ChunkMapIndices[(int)read_chunk.ChunkMapIndex].ChunkMapIndex].ChunkTypeIndex].ChunkTypeName == "nuccChunkPage")
                         {
-                            // Read ExtraIndicesCount and PageSize from the page chunk's data.
+
                             byte[] ExtraIndicesCountByte = new byte[4];
                             Array.Copy(read_chunk.ChunkData, 4, ExtraIndicesCountByte, 0, 4);
                             Array.Reverse(ExtraIndicesCountByte);
+
                             byte[] PageSizeByte = new byte[4];
                             Array.Copy(read_chunk.ChunkData, 0, PageSizeByte, 0, 4);
                             Array.Reverse(PageSizeByte);
+
                             UInt32 ExtraIndicesCount = BitConverter.ToUInt32(ExtraIndicesCountByte);
                             UInt32 PageSize = BitConverter.ToUInt32(PageSizeByte);
 
-                            // Validate that the range we are about to use is within the global lists.
-                            if (chunkIndicesOffset + PageSize > XfbinFile.ChunkTable.ChunkMapIndices.Count)
-                                throw new Exception($"Page size {PageSize} with chunkIndicesOffset {chunkIndicesOffset} exceeds ChunkMapIndices count {XfbinFile.ChunkTable.ChunkMapIndices.Count}.");
-                            if (extraMappingOffset + ExtraIndicesCount > XfbinFile.ChunkTable.ExtraMappings.Count)
-                                throw new Exception($"Extra indices count {ExtraIndicesCount} with extraMappingOffset {extraMappingOffset} exceeds ExtraMappings count {XfbinFile.ChunkTable.ExtraMappings.Count}.");
+                            for (int i = 0 + chunkIndicesOffset; i < chunkIndicesOffset + PageSize; i++)
+                            {
 
-                            for (int i = chunkIndicesOffset; i < chunkIndicesOffset + PageSize; i++)
-                            {
-                                new_page.ChunkMappings.Add(
-                                    XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ChunkMapIndices[i].ChunkMapIndex]
-                                );
+                                new_page.ChunkMappings.Add(XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ChunkMapIndices[i].ChunkMapIndex]);
                             }
-                            for (int i = extraMappingOffset; i < extraMappingOffset + ExtraIndicesCount; i++)
+
+                            for (int i = 0 + extraMappingOffset; i < extraMappingOffset + ExtraIndicesCount; i++)
                             {
+
                                 new_page.ExtraMappings.Add(XfbinFile.ChunkTable.ExtraMappings[i]);
                             }
                             extraMappingOffset += (int)ExtraIndicesCount;
@@ -112,7 +95,7 @@ namespace XFBIN_LIB
                             break;
                         }
                     }
-                    // Determine the page name by checking the chunk mappings.
+                    // optional, needed just for names
                     if (XfbinFile.ChunkTable.ChunkTypes[(int)new_page.ChunkMappings[0].ChunkTypeIndex].ChunkTypeName != "nuccChunkNull")
                     {
                         for (int i = new_page.ChunkMappings.Count - 1; i > 0; i--)
@@ -128,11 +111,10 @@ namespace XFBIN_LIB
                                 type == "nuccChunkTrail" ||
                                 type == "nuccChunkDynamics" ||
                                 type == "nuccChunkSprite" ||
-                                type == "nuccChunkSpriteAnm")
+                                type == "nuccChunkSpriteAnm"
+                                )
                             {
-                                new_page.PageName = "[" + page_id.ToString("D3") + "] " +
-                                    XfbinFile.ChunkTable.ChunkNames[(int)new_page.ChunkMappings[i].ChunkNameIndex].ChunkName +
-                                    " (" + type + ")";
+                                new_page.PageName = "[" + page_id.ToString("D3") + "] " + XfbinFile.ChunkTable.ChunkNames[(int)new_page.ChunkMappings[i].ChunkNameIndex].ChunkName + " (" + type + ")";
                                 break;
                             }
                         }
@@ -151,15 +133,15 @@ namespace XFBIN_LIB
                                 type == "nuccChunkTrail" ||
                                 type == "nuccChunkDynamics" ||
                                 type == "nuccChunkSprite" ||
-                                type == "nuccChunkSpriteAnm")
+                                type == "nuccChunkSpriteAnm"
+                                )
                             {
-                                new_page.PageName = "[" + page_id.ToString("D3") + "] " +
-                                    XfbinFile.ChunkTable.ChunkNames[(int)new_page.ChunkMappings[i].ChunkNameIndex].ChunkName +
-                                    " (" + type + ")";
+                                new_page.PageName = "[" + page_id.ToString("D3") + "] " + XfbinFile.ChunkTable.ChunkNames[(int)new_page.ChunkMappings[i].ChunkNameIndex].ChunkName + " (" + type + ")";
                                 break;
                             }
                         }
                     }
+
                     new_page.ChunkTable = XfbinFile.ChunkTable;
                     XfbinFile.Pages.Add(new_page);
                     page_id++;
@@ -168,16 +150,27 @@ namespace XFBIN_LIB
                 {
                     Console.WriteLine($"Page: {XfbinFile.Pages[i].PageName}");
                 }
+                //for (int i = 0; i<XfbinFile.ChunkTable.ChunkMapCount; i++) {
+                //    Console.WriteLine($"Type: {XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[i].ChunkTypeIndex].ChunkTypeName}" +
+                //    $" Path: {XfbinFile.ChunkTable.FilePaths[(int)XfbinFile.ChunkTable.ChunkMaps[i].FilePathIndex].FilePathName}" +
+                //    $" Name: {XfbinFile.ChunkTable.ChunkNames[(int)XfbinFile.ChunkTable.ChunkMaps[i].ChunkNameIndex].ChunkName}");
+                //}
+                //for (int i = 0; i < XfbinFile.ChunkTable.ExtraIndicesCount; i++) {
+                //    Console.WriteLine($"{XfbinFile.ChunkTable.ChunkNames[(int)XfbinFile.ChunkTable.ExtraMappings[i].ChunkNameIndex].ChunkName}" +
+                //    $" [{XfbinFile.ChunkTable.ChunkNames[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ExtraMappings[i].ChunkMapIndex].ChunkNameIndex].ChunkName}" +
+                //    $" ({XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ExtraMappings[i].ChunkMapIndex].ChunkTypeIndex].ChunkTypeName})]");
+                //}
             }
         }
 
         public string GetXfbinChunkType(int ChunkMapIndex)
         {
             int index = (int)XfbinFile.ChunkTable.ChunkMapIndices[ChunkMapIndex].ChunkMapIndex;
+
+
             return XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[index].ChunkTypeIndex].ChunkTypeName;
         }
     }
-
     public static class Helpers
     {
         // Note this MODIFIES THE GIVEN ARRAY then returns a reference to the modified array.
@@ -189,51 +182,39 @@ namespace XFBIN_LIB
 
         public static ObservableCollection<CHUNK_TYPE> ReadChunkTypeList(this BinaryReader binRdr, int size)
         {
-            // Register provider for non‑UTF encodings (e.g., windows-1251)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             ObservableCollection<CHUNK_TYPE> return_list = new ObservableCollection<CHUNK_TYPE>();
             byte[] byteTypes = binRdr.ReadBytes(size - 1);
-            string[] readChunkTypesString = Encoding.GetEncoding("windows-1251").GetString(byteTypes).Split('\0');
-            foreach (string chunkType in readChunkTypesString)
+            string[] readChunkTypesString = Encoding.UTF8.GetString(byteTypes).Split(new char[] { '\0' });
+            for (int i = 0; i < readChunkTypesString.Length; i++)
             {
-                if (!string.IsNullOrEmpty(chunkType))
-                    return_list.Add(new CHUNK_TYPE { ChunkTypeName = chunkType });
+                return_list.Add(new CHUNK_TYPE { ChunkTypeName = readChunkTypesString[i] });
             }
             binRdr.BaseStream.Seek(1, SeekOrigin.Current);
             return return_list;
         }
-
         public static ObservableCollection<FILE_PATH> ReadFilePathList(this BinaryReader binRdr, int size)
         {
-            // Register provider for non‑UTF encodings (e.g., windows-1251)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             ObservableCollection<FILE_PATH> return_list = new ObservableCollection<FILE_PATH>();
             byte[] byteTypes = binRdr.ReadBytes(size - 1);
-            string[] readChunkTypesString = Encoding.GetEncoding("windows-1251").GetString(byteTypes).Split('\0');
-            foreach (string filePath in readChunkTypesString)
+            string[] readChunkTypesString = Encoding.UTF8.GetString(byteTypes).Split(new char[] { '\0' });
+            for (int i = 0; i < readChunkTypesString.Length; i++)
             {
-                if (!string.IsNullOrEmpty(filePath))
-                    return_list.Add(new FILE_PATH { FilePathName = filePath });
+                return_list.Add(new FILE_PATH { FilePathName = readChunkTypesString[i] });
             }
             binRdr.BaseStream.Seek(1, SeekOrigin.Current);
             return return_list;
         }
-
         public static ObservableCollection<CHUNK_NAME> ReadChunkNameList(this BinaryReader binRdr, int size)
         {
-            // Register provider for non‑UTF encodings (e.g., windows-1251)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             ObservableCollection<CHUNK_NAME> return_list = new ObservableCollection<CHUNK_NAME>();
             byte[] byteTypes = binRdr.ReadBytes(size - 1);
-            string[] readChunkTypesString = Encoding.GetEncoding("windows-1251").GetString(byteTypes).Split('\0');
-            foreach (string chunkName in readChunkTypesString)
+            string[] readChunkTypesString = Encoding.UTF8.GetString(byteTypes).Split(new char[] { '\0' });
+            for (int i = 0; i < readChunkTypesString.Length; i++)
             {
-                if (!string.IsNullOrEmpty(chunkName))
-                    return_list.Add(new CHUNK_NAME { ChunkName = chunkName });
+                return_list.Add(new CHUNK_NAME { ChunkName = readChunkTypesString[i] });
             }
             return return_list;
         }
-
         public static ObservableCollection<CHUNK_MAP> ReadChunkMapList(this BinaryReader binRdr, int size, int count)
         {
             ObservableCollection<CHUNK_MAP> return_list = new ObservableCollection<CHUNK_MAP>();
@@ -262,7 +243,7 @@ namespace XFBIN_LIB
         {
             ObservableCollection<EXTRA_CHUNK_MAP_INDICES> return_list = new ObservableCollection<EXTRA_CHUNK_MAP_INDICES>();
             byte[] byteTypes = binRdr.ReadBytes(size);
-            for (int i = offset; i < offset + count; i++)
+            for (int i = 0 + offset; i < offset + count; i++)
             {
                 byte[] ChunkName = new byte[4];
                 Array.Copy(byteTypes, i * 0x8, ChunkName, 0, 4);
@@ -344,11 +325,16 @@ namespace XFBIN_LIB
             return BitConverter.ToInt32(binRdr.ReadBytesRequired(sizeof(Int32)).Reverse(), 0);
         }
 
+
+
+
         public static byte[] ReadBytesRequired(this BinaryReader binRdr, int byteCount)
         {
             var result = binRdr.ReadBytes(byteCount);
+
             if (result.Length != byteCount)
                 throw new EndOfStreamException(string.Format("{0} bytes required from stream, but only {1} returned.", byteCount, result.Length));
+
             return result;
         }
     }
