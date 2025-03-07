@@ -150,19 +150,19 @@ namespace XFBIN_LIB
             chunk_table.ChunkTypeSize = 0;
             foreach (var type in chunk_type_list)
             {
-                chunk_table.ChunkTypeSize += (uint)Encoding.UTF8.GetByteCount(type.ChunkTypeName) + 1;
+                chunk_table.ChunkTypeSize += (uint)Encoding.GetEncoding("windows-1251").GetByteCount(type.ChunkTypeName) + 1;
             }
             chunk_table.FilePathCount = (uint)chunk_path_list.Count();
             chunk_table.FilePathSize = 0;
             foreach (var file_path in chunk_path_list)
             {
-                chunk_table.FilePathSize += (uint)Encoding.UTF8.GetByteCount(file_path.FilePathName) + 1;
+                chunk_table.FilePathSize += (uint)Encoding.GetEncoding("windows-1251").GetByteCount(file_path.FilePathName) + 1;
             }
             chunk_table.ChunkNameCount = (uint)chunk_name_list.Count();
             chunk_table.ChunkNameSize = 0;
             foreach (var name in chunk_name_list)
             {
-                chunk_table.ChunkNameSize += (uint)Encoding.UTF8.GetByteCount(name.ChunkName) + 1;
+                chunk_table.ChunkNameSize += (uint)Encoding.GetEncoding("windows-1251").GetByteCount(name.ChunkName) + 1;
             }
             chunk_table.ChunkMapCount = (uint)chunk_map_list.Count();
             chunk_table.ChunkMapSize = (uint)chunk_map_list.Count() * 0xC;

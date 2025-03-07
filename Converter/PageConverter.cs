@@ -171,54 +171,133 @@ namespace XFBIN_LIB.Converter {
         public override PAGE Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
             return null;
         }
-        public override void Write(Utf8JsonWriter writer, PAGE value, JsonSerializerOptions options) {
-            //Start
+        public override void Write(Utf8JsonWriter writer, PAGE value, JsonSerializerOptions options)
+        {
             writer.WriteStartObject();
+
+            // "Chunk Maps" section
             writer.WriteStartArray("Chunk Maps");
-            foreach (CHUNK_MAP chunk_map in value.ChunkMappings) {
+            foreach (CHUNK_MAP chunk_map in value.ChunkMappings)
+            {
                 writer.WriteStartObject();
-                writer.WriteString("Name", value.ChunkTable.ChunkNames[(int)chunk_map.ChunkNameIndex].ChunkName);
-                writer.WriteString("Type", value.ChunkTable.ChunkTypes[(int)chunk_map.ChunkTypeIndex].ChunkTypeName);
-                writer.WriteString("Path", value.ChunkTable.FilePaths[(int)chunk_map.FilePathIndex].FilePathName);
+                int nameIdx = (int)chunk_map.ChunkNameIndex;
+                string name = (nameIdx >= 0 && nameIdx < value.ChunkTable.ChunkNames.Count)
+                                ? value.ChunkTable.ChunkNames[nameIdx].ChunkName
+                                : "";
+                writer.WriteString("Name", name);
+
+                int typeIdx = (int)chunk_map.ChunkTypeIndex;
+                string typeName = (typeIdx >= 0 && typeIdx < value.ChunkTable.ChunkTypes.Count)
+                                  ? value.ChunkTable.ChunkTypes[typeIdx].ChunkTypeName
+                                  : "";
+                writer.WriteString("Type", typeName);
+
+                int pathIdx = (int)chunk_map.FilePathIndex;
+                string pathName = (pathIdx >= 0 && pathIdx < value.ChunkTable.FilePaths.Count)
+                                  ? value.ChunkTable.FilePaths[pathIdx].FilePathName
+                                  : "";
+                writer.WriteString("Path", pathName);
                 writer.WriteEndObject();
             }
             writer.WriteEndArray();
+
+            // "Chunk References" section
             writer.WriteStartArray("Chunk References");
-            foreach (EXTRA_CHUNK_MAP_INDICES extra_map in value.ExtraMappings) {
+            foreach (EXTRA_CHUNK_MAP_INDICES extra_map in value.ExtraMappings)
+            {
                 writer.WriteStartObject();
-                writer.WriteString("Name", value.ChunkTable.ChunkNames[(int)extra_map.ChunkNameIndex].ChunkName);
+                int extraNameIdx = (int)extra_map.ChunkNameIndex;
+                string extraName = (extraNameIdx >= 0 && extraNameIdx < value.ChunkTable.ChunkNames.Count)
+                                   ? value.ChunkTable.ChunkNames[extraNameIdx].ChunkName
+                                   : "";
+                writer.WriteString("Name", extraName);
+
                 writer.WriteStartObject("Chunk");
-                writer.WriteString("Name", value.ChunkTable.ChunkNames[(int)value.ChunkTable.ChunkMaps[(int)extra_map.ChunkMapIndex].ChunkNameIndex].ChunkName);
-                writer.WriteString("Type", value.ChunkTable.ChunkTypes[(int)value.ChunkTable.ChunkMaps[(int)extra_map.ChunkMapIndex].ChunkTypeIndex].ChunkTypeName);
-                writer.WriteString("Path", value.ChunkTable.FilePaths[(int)value.ChunkTable.ChunkMaps[(int)extra_map.ChunkMapIndex].FilePathIndex].FilePathName);
+                int extraMapIdx = (int)extra_map.ChunkMapIndex;
+                if (extraMapIdx >= 0 && extraMapIdx < value.ChunkTable.ChunkMaps.Count)
+                {
+                    CHUNK_MAP map = value.ChunkTable.ChunkMaps[extraMapIdx];
+
+                    int mapNameIdx = (int)map.ChunkNameIndex;
+                    string mapName = (mapNameIdx >= 0 && mapNameIdx < value.ChunkTable.ChunkNames.Count)
+                                     ? value.ChunkTable.ChunkNames[mapNameIdx].ChunkName
+                                     : "";
+                    writer.WriteString("Name", mapName);
+
+                    int mapTypeIdx = (int)map.ChunkTypeIndex;
+                    string mapType = (mapTypeIdx >= 0 && mapTypeIdx < value.ChunkTable.ChunkTypes.Count)
+                                     ? value.ChunkTable.ChunkTypes[mapTypeIdx].ChunkTypeName
+                                     : "";
+                    writer.WriteString("Type", mapType);
+
+                    int mapPathIdx = (int)map.FilePathIndex;
+                    string mapPath = (mapPathIdx >= 0 && mapPathIdx < value.ChunkTable.FilePaths.Count)
+                                     ? value.ChunkTable.FilePaths[mapPathIdx].FilePathName
+                                     : "";
+                    writer.WriteString("Path", mapPath);
+                } else
+                {
+                    writer.WriteNull("Name");
+                    writer.WriteNull("Type");
+                    writer.WriteNull("Path");
+                }
                 writer.WriteEndObject();
                 writer.WriteEndObject();
             }
             writer.WriteEndArray();
-            writer.WriteStartArray("Chunks");
 
-            foreach (CHUNK chunk in value.Chunks) {
-                 if (value.ChunkTable.FilePaths[(int)value.ChunkTable.ChunkMaps[(int)value.ChunkTable.ChunkMapIndices[(int)chunk.ChunkMapIndex].ChunkMapIndex].FilePathIndex].FilePathName == "")
-                   continue;
+            // "Chunks" section
+            writer.WriteStartArray("Chunks");
+            foreach (CHUNK chunk in value.Chunks)
+            {
+                int chunkMapIndexIdx = (int)chunk.ChunkMapIndex;
+                if (chunkMapIndexIdx < 0 || chunkMapIndexIdx >= value.ChunkTable.ChunkMapIndices.Count)
+                    continue;
+
+                int actualChunkMapIndex = (int)value.ChunkTable.ChunkMapIndices[chunkMapIndexIdx].ChunkMapIndex;
+                if (actualChunkMapIndex < 0 || actualChunkMapIndex >= value.ChunkTable.ChunkMaps.Count)
+                    continue;
+
+                CHUNK_MAP chunkMap = value.ChunkTable.ChunkMaps[actualChunkMapIndex];
+
+                int filePathIdx = (int)chunkMap.FilePathIndex;
+                if (filePathIdx < 0 || filePathIdx >= value.ChunkTable.FilePaths.Count)
+                    continue;
+                string filePathName = value.ChunkTable.FilePaths[filePathIdx].FilePathName;
+                if (string.IsNullOrEmpty(filePathName))
+                    continue;
+
+                int chunkTypeIdx = (int)chunkMap.ChunkTypeIndex;
+                string type = (chunkTypeIdx >= 0 && chunkTypeIdx < value.ChunkTable.ChunkTypes.Count)
+                              ? value.ChunkTable.ChunkTypes[chunkTypeIdx].ChunkTypeName
+                              : "";
                 string format = ".bin";
-                string type = value.ChunkTable.ChunkTypes[(int)value.ChunkTable.ChunkMaps[(int)value.ChunkTable.ChunkMapIndices[(int)chunk.ChunkMapIndex].ChunkMapIndex].ChunkTypeIndex].ChunkTypeName;
-                if (file_format.ContainsKey(type))
-                    format = file_format[type];
+                if (PageConverter.file_format.ContainsKey(type))
+                    format = PageConverter.file_format[type];
+
+                if (type == "nuccChunkNull" || type == "nuccChunkPage" || type == "nuccChunkIndex")
+                    continue;
+
+                int chunkNameIdx = (int)chunkMap.ChunkNameIndex;
+                string chunkName = (chunkNameIdx >= 0 && chunkNameIdx < value.ChunkTable.ChunkNames.Count)
+                                   ? value.ChunkTable.ChunkNames[chunkNameIdx].ChunkName
+                                   : "";
 
                 writer.WriteStartObject();
-                writer.WriteString("File Name", value.ChunkTable.ChunkNames[(int)value.ChunkTable.ChunkMaps[(int)value.ChunkTable.ChunkMapIndices[(int)chunk.ChunkMapIndex].ChunkMapIndex].ChunkNameIndex].ChunkName + format);
+                writer.WriteString("File Name", chunkName + format);
                 writer.WriteNumber("Version", chunk.Version);
                 writer.WriteNumber("Version Attribute", chunk.VersionAttribute);
                 writer.WriteStartObject("Chunk");
-                writer.WriteString("Name", value.ChunkTable.ChunkNames[(int)value.ChunkTable.ChunkMaps[(int)value.ChunkTable.ChunkMapIndices[(int)chunk.ChunkMapIndex].ChunkMapIndex].ChunkNameIndex].ChunkName);
+                writer.WriteString("Name", chunkName);
                 writer.WriteString("Type", type);
-                writer.WriteString("Path", value.ChunkTable.FilePaths[(int)value.ChunkTable.ChunkMaps[(int)value.ChunkTable.ChunkMapIndices[(int)chunk.ChunkMapIndex].ChunkMapIndex].FilePathIndex].FilePathName);
+                writer.WriteString("Path", filePathName);
                 writer.WriteEndObject();
                 writer.WriteEndObject();
             }
             writer.WriteEndArray();
-            //End
+
             writer.WriteEndObject();
         }
+
     }
 }
