@@ -10,9 +10,8 @@ namespace XFBIN_LIB
         public void ReadXFBIN(string path = "")
         {
             XfbinFile = new XFBIN.XFBIN();
-            using (var reader = new BinaryReader(File.Open(path, FileMode.Open)))
+            using (BinaryReader reader = new BinaryReader(File.Open(path, FileMode.Open)))
             {
-                // Read header
                 XfbinFile.MAGIC = reader.ReadChars(4);
                 XfbinFile.FileID = reader.ReadUInt32BE();
                 reader.BaseStream.Seek(8, SeekOrigin.Current);
@@ -22,82 +21,147 @@ namespace XFBIN_LIB
                 XfbinFile.FileVersionAttribute = reader.ReadUInt16BE();
                 Console.WriteLine($"Version: {XfbinFile.FileVersion}  Attribute: {XfbinFile.FileVersionAttribute}");
 
-                // Read ChunkTable header values
-                var table = XfbinFile.ChunkTable;
-                table.ChunkTypeCount = reader.ReadUInt32BE();
-                table.ChunkTypeSize = reader.ReadUInt32BE();
-                table.FilePathCount = reader.ReadUInt32BE();
-                table.FilePathSize = reader.ReadUInt32BE();
-                table.ChunkNameCount = reader.ReadUInt32BE();
-                table.ChunkNameSize = reader.ReadUInt32BE();
-                table.ChunkMapCount = reader.ReadUInt32BE();
-                table.ChunkMapSize = reader.ReadUInt32BE();
-                table.ChunkMapIndicesCount = reader.ReadUInt32BE();
-                table.ExtraIndicesCount = reader.ReadUInt32BE();
 
-                // Read ChunkTable lists
-                table.ChunkTypes = reader.ReadChunkTypeList((int)table.ChunkTypeSize);
-                table.FilePaths = reader.ReadFilePathList((int)table.FilePathSize);
-                table.ChunkNames = reader.ReadChunkNameList((int)table.ChunkNameSize);
+                XfbinFile.ChunkTable.ChunkTypeCount = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ChunkTypeSize = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.FilePathCount = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.FilePathSize = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ChunkNameCount = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ChunkNameSize = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ChunkMapCount = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ChunkMapSize = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ChunkMapIndicesCount = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ExtraIndicesCount = reader.ReadUInt32BE();
+                XfbinFile.ChunkTable.ChunkTypes = reader.ReadChunkTypeList((int)XfbinFile.ChunkTable.ChunkTypeSize);
+                XfbinFile.ChunkTable.FilePaths = reader.ReadFilePathList((int)XfbinFile.ChunkTable.FilePathSize);
+                XfbinFile.ChunkTable.ChunkNames = reader.ReadChunkNameList((int)XfbinFile.ChunkTable.ChunkNameSize);
 
-                // Align stream to 4-byte boundary
+                //skip 00s
                 int offset = (int)reader.BaseStream.Position;
-                int alignment = (4 - (offset % 4)) % 4;
-                reader.BaseStream.Seek(alignment, SeekOrigin.Current);
+                int add_null = 4 - (offset % 4);
+                reader.BaseStream.Seek(add_null, SeekOrigin.Current);
 
-                // Read remaining ChunkTable lists
-                table.ChunkMaps = reader.ReadChunkMapList((int)table.ChunkMapSize, (int)table.ChunkMapCount);
-                table.ExtraMappings = reader.ReadExtraChunkMapList((int)table.ExtraIndicesCount * 8, (int)table.ExtraIndicesCount);
-                table.ChunkMapIndices = reader.ReadChunkMapIndicesList((int)table.ChunkMapIndicesCount * 4, (int)table.ChunkMapIndicesCount);
+                XfbinFile.ChunkTable.ChunkMaps = reader.ReadChunkMapList((int)XfbinFile.ChunkTable.ChunkMapSize, (int)XfbinFile.ChunkTable.ChunkMapCount);
+                XfbinFile.ChunkTable.ExtraMappings = reader.ReadExtraChunkMapList((int)XfbinFile.ChunkTable.ExtraIndicesCount * 8, (int)XfbinFile.ChunkTable.ExtraIndicesCount);
+                XfbinFile.ChunkTable.ChunkMapIndices = reader.ReadChunkMapIndicesList((int)XfbinFile.ChunkTable.ChunkMapIndicesCount * 4, (int)XfbinFile.ChunkTable.ChunkMapIndicesCount);
 
+                //read pages and chunks
                 int extraMappingOffset = 0;
                 int chunkIndicesOffset = 0;
-                int pageId = 0;
 
-                // Process pages and their chunks
-                while (reader.BaseStream.Position < reader.BaseStream.Length)
+                int page_id = 0;
+                while (reader.BaseStream.Position != reader.BaseStream.Length)
                 {
-                    PAGE newPage = new PAGE();
-                    while (reader.BaseStream.Position < reader.BaseStream.Length)
+                    PAGE new_page = new PAGE();
+                    while (reader.BaseStream.Position != reader.BaseStream.Length)
                     {
-                        CHUNK chunk = reader.ReadChunk();
-                        chunk.ChunkMapIndex += (UInt32)chunkIndicesOffset;
-                        newPage.Chunks.Add(chunk);
-
-                        // Detect page break when encountering "nuccChunkPage"
-                        var chunkMapIndex = (int)chunk.ChunkMapIndex;
-                        var mapIndex = (int)table.ChunkMapIndices[chunkMapIndex].ChunkMapIndex;
-                        string chunkType = table.ChunkTypes[(int)table.ChunkMaps[mapIndex].ChunkTypeIndex].ChunkTypeName;
-                        if (chunkType == "nuccChunkPage")
+                        CHUNK read_chunk = reader.ReadChunk();
+                        read_chunk.ChunkMapIndex += (UInt32)chunkIndicesOffset;
+                        //Console.WriteLine($"Page: {XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ChunkMapIndices[(int)read_chunk.ChunkMapIndex + chunkIndicesOffset].ChunkMapIndex].ChunkTypeIndex].ChunkTypeName}");
+                        new_page.Chunks.Add(read_chunk);
+                        if (XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ChunkMapIndices[(int)read_chunk.ChunkMapIndex].ChunkMapIndex].ChunkTypeIndex].ChunkTypeName == "nuccChunkPage")
                         {
-                            UInt32 pageSize = ReadUInt32BigEndian(chunk.ChunkData, 0);
-                            UInt32 extraCount = ReadUInt32BigEndian(chunk.ChunkData, 4);
 
-                            for (int i = chunkIndicesOffset; i < chunkIndicesOffset + pageSize; i++)
+                            byte[] ExtraIndicesCountByte = new byte[4];
+                            Array.Copy(read_chunk.ChunkData, 4, ExtraIndicesCountByte, 0, 4);
+                            Array.Reverse(ExtraIndicesCountByte);
+
+                            byte[] PageSizeByte = new byte[4];
+                            Array.Copy(read_chunk.ChunkData, 0, PageSizeByte, 0, 4);
+                            Array.Reverse(PageSizeByte);
+
+                            UInt32 ExtraIndicesCount = BitConverter.ToUInt32(ExtraIndicesCountByte);
+                            UInt32 PageSize = BitConverter.ToUInt32(PageSizeByte);
+
+                            for (int i = 0 + chunkIndicesOffset; i < chunkIndicesOffset + PageSize; i++)
                             {
-                                newPage.ChunkMappings.Add(table.ChunkMaps[(int)table.ChunkMapIndices[i].ChunkMapIndex]);
+
+                                new_page.ChunkMappings.Add(XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ChunkMapIndices[i].ChunkMapIndex]);
                             }
-                            for (int i = extraMappingOffset; i < extraMappingOffset + extraCount; i++)
+
+                            for (int i = 0 + extraMappingOffset; i < extraMappingOffset + ExtraIndicesCount; i++)
                             {
-                                newPage.ExtraMappings.Add(table.ExtraMappings[i]);
+
+                                new_page.ExtraMappings.Add(XfbinFile.ChunkTable.ExtraMappings[i]);
                             }
-                            extraMappingOffset += (int)extraCount;
-                            chunkIndicesOffset += (int)pageSize;
+                            extraMappingOffset += (int)ExtraIndicesCount;
+                            chunkIndicesOffset += (int)PageSize;
                             break;
                         }
                     }
+                    // optional, needed just for names
+                    if (XfbinFile.ChunkTable.ChunkTypes[(int)new_page.ChunkMappings[0].ChunkTypeIndex].ChunkTypeName != "nuccChunkNull")
+                    {
+                        for (int i = new_page.Chunks.Count - 1; i > 0; i--)
+                        {
+                            int v1 = (int)new_page.Chunks[i].ChunkMapIndex;
+                            int v2 = (int)XfbinFile.ChunkTable.ChunkMapIndices[v1].ChunkMapIndex;
+                            int v3 = (int)XfbinFile.ChunkTable.ChunkMaps[v2].ChunkNameIndex;
+                            int v4 = (int)XfbinFile.ChunkTable.ChunkMaps[v2].ChunkTypeIndex;
+                            string type = XfbinFile.ChunkTable.ChunkTypes[v4].ChunkTypeName;
+                            if (type == "nuccChunkAnm" ||
+                                type == "nuccChunkAnmStrm" ||
+                                type == "nuccChunkClump" ||
+                                type == "nuccChunkStrmAnm" ||
+                                type == "nuccChunkParticle" ||
+                                type == "nuccChunkTexture" ||
+                                type == "nuccChunkBinary" ||
+                                type == "nuccChunkTrail" ||
+                                type == "nuccChunkDynamics" ||
+                                type == "nuccChunkSprite" ||
+                                type == "nuccChunkSpriteAnm"
+                                )
+                            {
+                                new_page.PageName = "[" + page_id.ToString("D3") + "] " + XfbinFile.ChunkTable.ChunkNames[v3].ChunkName + " (" + type + ")";
+                                break;
+                            }
+                        }
+                    } else
+                    {
+                        for (int i = 0; i < new_page.Chunks.Count; i++)
+                        {
+                            int v1 = (int)new_page.Chunks[i].ChunkMapIndex;
+                            int v2 = (int)XfbinFile.ChunkTable.ChunkMapIndices[v1].ChunkMapIndex;
+                            int v3 = (int)XfbinFile.ChunkTable.ChunkMaps[v2].ChunkNameIndex;
+                            int v4 = (int)XfbinFile.ChunkTable.ChunkMaps[v2].ChunkTypeIndex;
+                            string type = XfbinFile.ChunkTable.ChunkTypes[v4].ChunkTypeName;
+                            if (type == "nuccChunkAnm" ||
+                                type == "nuccChunkAnmStrm" ||
+                                type == "nuccChunkClump" ||
+                                type == "nuccChunkStrmAnm" ||
+                                type == "nuccChunkParticle" ||
+                                type == "nuccChunkTexture" ||
+                                type == "nuccChunkBinary" ||
+                                type == "nuccChunkTrail" ||
+                                type == "nuccChunkDynamics" ||
+                                type == "nuccChunkSprite" ||
+                                type == "nuccChunkSpriteAnm"
+                                )
+                            {
+                                new_page.PageName = "[" + page_id.ToString("D3") + "] " + XfbinFile.ChunkTable.ChunkNames[v3].ChunkName + " (" + type + ")";
+                                break;
+                            }
+                        }
+                    }
 
-                    // Set page name based on valid chunk types
-                    newPage.PageName = GetPageName(newPage, pageId, table);
-                    newPage.ChunkTable = table;
-                    XfbinFile.Pages.Add(newPage);
-                    pageId++;
+                    new_page.ChunkTable = XfbinFile.ChunkTable;
+                    XfbinFile.Pages.Add(new_page);
+                    page_id++;
                 }
-
-                foreach (var page in XfbinFile.Pages)
+                for (int i = 0; i < XfbinFile.Pages.Count; i++)
                 {
-                    Console.WriteLine($"Page: {page.PageName}");
+                    Console.WriteLine($"Page: {XfbinFile.Pages[i].PageName}");
                 }
+                //for (int i = 0; i<XfbinFile.ChunkTable.ChunkMapCount; i++) {
+                //    Console.WriteLine($"Type: {XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[i].ChunkTypeIndex].ChunkTypeName}" +
+                //    $" Path: {XfbinFile.ChunkTable.FilePaths[(int)XfbinFile.ChunkTable.ChunkMaps[i].FilePathIndex].FilePathName}" +
+                //    $" Name: {XfbinFile.ChunkTable.ChunkNames[(int)XfbinFile.ChunkTable.ChunkMaps[i].ChunkNameIndex].ChunkName}");
+                //}
+                //for (int i = 0; i < XfbinFile.ChunkTable.ExtraIndicesCount; i++) {
+                //    Console.WriteLine($"{XfbinFile.ChunkTable.ChunkNames[(int)XfbinFile.ChunkTable.ExtraMappings[i].ChunkNameIndex].ChunkName}" +
+                //    $" [{XfbinFile.ChunkTable.ChunkNames[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ExtraMappings[i].ChunkMapIndex].ChunkNameIndex].ChunkName}" +
+                //    $" ({XfbinFile.ChunkTable.ChunkTypes[(int)XfbinFile.ChunkTable.ChunkMaps[(int)XfbinFile.ChunkTable.ExtraMappings[i].ChunkMapIndex].ChunkTypeIndex].ChunkTypeName})]");
+                //}
             }
         }
 
