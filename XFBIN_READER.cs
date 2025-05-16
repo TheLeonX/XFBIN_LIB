@@ -109,7 +109,8 @@ namespace XFBIN_LIB
                                 type == "nuccChunkTrail" ||
                                 type == "nuccChunkDynamics" ||
                                 type == "nuccChunkSprite" ||
-                                type == "nuccChunkSpriteAnm"
+                                type == "nuccChunkSpriteAnm" ||
+                                type == "nuccChunkNub"
                                 )
                             {
                                 new_page.PageName = "[" + page_id.ToString("D3") + "] " + XfbinFile.ChunkTable.ChunkNames[v3].ChunkName + " (" + type + ")";
@@ -135,7 +136,8 @@ namespace XFBIN_LIB
                                 type == "nuccChunkTrail" ||
                                 type == "nuccChunkDynamics" ||
                                 type == "nuccChunkSprite" ||
-                                type == "nuccChunkSpriteAnm"
+                                type == "nuccChunkSpriteAnm" ||
+                                type == "nuccChunkNub"
                                 )
                             {
                                 new_page.PageName = "[" + page_id.ToString("D3") + "] " + XfbinFile.ChunkTable.ChunkNames[v3].ChunkName + " (" + type + ")";
